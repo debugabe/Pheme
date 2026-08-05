@@ -1,6 +1,6 @@
 [package]
 name = "pheme"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 authors = ["Pheme Contributors <contributors@pheme.dev>"]
 description = "CLI tool to generate audio podcast episodes from news using AI personas and semantic memory."

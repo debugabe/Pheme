@@ -4,7 +4,7 @@ use colored::*;
 #[derive(Parser, Debug)]
 #[command(name = "pheme")]
 #[command(author = "Pheme Contributors")]
-#[command(version = "0.1.3")]
+#[command(version = "0.1.5")]
 #[command(about = "AI Audio Podcast Generator from News with Semantic Memory", long_about = None)]
 #[command(disable_help_subcommand = true)]
 pub struct Cli {
@@ -45,120 +45,215 @@ pub enum Commands {
     },
 }
 
+// Crimson Red Color: RGB (220, 20, 60)
+fn crimson<T: AsRef<str>>(s: T) -> ColoredString {
+    s.as_ref().truecolor(220, 20, 60)
+}
+
 pub fn print_banner() {
-    let banner = r#"
-  ____  _   _ _____ __  __ _____ 
- |  _ \| | | | ____|  \/  | ____|
- | |_) | |_| |  _| | |\/| |  _|  
- |  __/|  _  | |___| |  | | |___ 
- |_|   |_| |_|_____|_|  |_|_____|
+    let title_art = r#"
+.______   .__   __.  _______ .___  ___.  _______ 
+|   _  \  |  \ |  | |   ____||   \/   | |   ____|
+|  |_)  | |   \|  | |  |__   |  \  /  | |  |__   
+|   ___/  |  . `  | |   __|  |  |\/|  | |   __|  
+|  |      |  |\   | |  |____ |  |  |  | |  |____ 
+| _|      |__| \__| |_______||__|  |__| |_______|
 "#;
-    println!("{}", banner.cyan().bold());
-    println!(
-        "  {}\n",
-        "AI Audio Podcast Generator from News & Semantic Memory"
-            .bright_black()
-            .italic()
-    );
+
+    println!("{}", crimson(title_art).bold());
 }
 
 pub fn print_help_guide(lang: &str) {
     print_banner();
 
-    if lang.starts_with("en") {
-        println!(
-            "{}",
-            "Pheme CLI — Available Commands Guide".bold().underline()
+    let is_english = lang.starts_with("en");
+
+    let emblem = vec![
+        r#"       /\  /\       "#,
+        r#"      /  \/  \      "#,
+        r#"     |   ||   |     "#,
+        r#"     |  (o)   |     "#,
+        r#"      \  ||  /      "#,
+        r#"       \ || /       "#,
+        r#"        \||/        "#,
+        r#"         \/         "#,
+        r#"      .------.      "#,
+        r#"     /  PHEME \     "#,
+        r#"    (  AUDIO AI )   "#,
+        r#"     \________/     "#,
+    ];
+
+    let version_header = if is_english {
+        " Pheme v0.1.5 (2026) "
+    } else {
+        " Pheme v0.1.5 (2026) "
+    };
+
+    // Box top line
+    let box_width = 86;
+    let header_fill = box_width - 3 - version_header.len();
+    let top_border = format!("┌{} {}┐", "─".repeat(header_fill), version_header);
+
+    println!("{}", crimson(&top_border).bold());
+
+    let mut right_lines: Vec<ColoredString> = Vec::new();
+
+    if is_english {
+        right_lines.push(crimson("Available Commands").bold());
+        right_lines.push(
+            format!(
+                "  {} : {}",
+                "pheme generate <URL>".yellow().bold(),
+                "Generate audio podcast from news URL".white()
+            )
+            .into(),
         );
-        println!();
-        println!("  1. {}", "pheme init".cyan().bold());
-        println!(
-            "     {}",
-            "Launches an interactive wizard to configure LLM, TTS, Embeddings, Personas and language.".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : {}",
+                "pheme init".yellow().bold(),
+                "Interactive setup wizard for LLM/TTS/Personas".white()
+            )
+            .into(),
         );
-        println!();
-        println!(
-            "  2. {} {} [{}]",
-            "pheme generate".cyan().bold(),
-            "<URL>".yellow(),
-            "--duration short|medium|long".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : {}",
+                "pheme config [--show]".yellow().bold(),
+                "Validate or print active configuration".white()
+            )
+            .into(),
         );
-        println!(
-            "     {}",
-            "Generates a complete podcast episode from a news article URL.".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : {}",
+                "pheme help / /help".yellow().bold(),
+                "Display this interactive commands guide".white()
+            )
+            .into(),
         );
-        println!(
-            "     {}",
-            "Aliases: pheme gen <URL>, pheme g <URL>".dimmed()
+        right_lines.push("".into());
+        right_lines.push(crimson("Supported Engines & Features").bold());
+        right_lines.push(
+            format!(
+                "  {} : OpenAI, OpenRouter, Groq, DeepSeek, Anthropic, Ollama",
+                "LLM Providers".yellow()
+            )
+            .into(),
         );
-        println!();
-        println!(
-            "  3. {} [{}]",
-            "pheme config".cyan().bold(),
-            "--show".yellow()
+        right_lines.push(
+            format!(
+                "  {} : Piper (Local ONNX), ElevenLabs (Cloud API)",
+                "TTS Providers".yellow()
+            )
+            .into(),
         );
-        println!(
-            "     {}",
-            "Validates active configuration file or displays full TOML settings.".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : SQLite vector database with cosine similarity",
+                "Memory Engine".yellow()
+            )
+            .into(),
         );
-        println!();
-        println!(
-            "  4. {} [{}] (or {})",
-            "pheme help".cyan().bold(),
-            "--lang en|pt".yellow(),
-            "pheme /help".cyan()
-        );
-        println!(
-            "     {}\n",
-            "Displays this comprehensive command guide.".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : News Reviewer, Script Fidelity & Technical Audio Audit",
+                "Safety Reviewers".yellow()
+            )
+            .into(),
         );
     } else {
-        println!(
-            "{}",
-            "Pheme CLI — Guia Completo de Comandos".bold().underline()
+        right_lines.push(crimson("Comandos Disponíveis").bold());
+        right_lines.push(
+            format!(
+                "  {} : {}",
+                "pheme generate <URL>".yellow().bold(),
+                "Gera podcast em áudio a partir de notícia".white()
+            )
+            .into(),
         );
-        println!();
-        println!("  1. {}", "pheme init".cyan().bold());
-        println!(
-            "     {}",
-            "Inicia o assistente interativo para configurar LLM, TTS, Embeddings, Personas e idioma.".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : {}",
+                "pheme init".yellow().bold(),
+                "Assistente de configuração interativo de LLM/TTS".white()
+            )
+            .into(),
         );
-        println!();
-        println!(
-            "  2. {} {} [{}]",
-            "pheme generate".cyan().bold(),
-            "<URL>".yellow(),
-            "--duration curto|medio|longo".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : {}",
+                "pheme config [--show]".yellow().bold(),
+                "Valida ou exibe as definições ativas do TOML".white()
+            )
+            .into(),
         );
-        println!(
-            "     {}",
-            "Gera um episódio completo de podcast a partir da URL de uma notícia.".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : {}",
+                "pheme help / /help".yellow().bold(),
+                "Exibe este guia interativo de comandos".white()
+            )
+            .into(),
         );
-        println!(
-            "     {}",
-            "Atalhos: pheme gen <URL>, pheme g <URL>, pheme gerar <URL>".dimmed()
+        right_lines.push("".into());
+        right_lines.push(crimson("Provedores e Recursos").bold());
+        right_lines.push(
+            format!(
+                "  {} : OpenAI, OpenRouter, Groq, DeepSeek, Anthropic, Ollama",
+                "Provedores LLM".yellow()
+            )
+            .into(),
         );
-        println!();
-        println!(
-            "  3. {} [{}]",
-            "pheme config".cyan().bold(),
-            "--show".yellow()
+        right_lines.push(
+            format!(
+                "  {} : Piper (Local ONNX), ElevenLabs (API Nuvem)",
+                "Provedores TTS".yellow()
+            )
+            .into(),
         );
-        println!(
-            "     {}",
-            "Valida o arquivo de configuração ativo ou exibe todas as definições TOML."
-                .bright_black()
+        right_lines.push(
+            format!(
+                "  {} : Banco de vetores SQLite com similaridade de cosseno",
+                "Memória Vetorial".yellow()
+            )
+            .into(),
         );
-        println!();
-        println!(
-            "  4. {} [{}] (ou {})",
-            "pheme help".cyan().bold(),
-            "--lang en|pt".yellow(),
-            "pheme /help".cyan()
-        );
-        println!(
-            "     {}\n",
-            "Exibe este guia detalhado de comandos.".bright_black()
+        right_lines.push(
+            format!(
+                "  {} : Revisor de Notícias, Fidelidade de Roteiro e Auditoria WAV",
+                "Revisores de Qualidade".yellow()
+            )
+            .into(),
         );
     }
+
+    let max_rows = emblem.len().max(right_lines.len());
+
+    let empty_line = "".into();
+    for i in 0..max_rows {
+        let left_part = if i < emblem.len() {
+            emblem[i]
+        } else {
+            "                    "
+        };
+
+        let right_part = if i < right_lines.len() {
+            &right_lines[i]
+        } else {
+            &empty_line
+        };
+
+        println!(
+            "{} {:<22} │ {:<58} {}",
+            crimson("│"),
+            crimson(left_part).bold(),
+            right_part,
+            crimson("│")
+        );
+    }
+
+    // Box bottom line
+    let bottom_border = format!("└{}┘", "─".repeat(box_width - 2));
+    println!("{}\n", crimson(&bottom_border).bold());
 }

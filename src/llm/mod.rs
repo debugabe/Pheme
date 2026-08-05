@@ -22,5 +22,9 @@ pub struct LlmScriptResponse {
 
 #[async_trait]
 pub trait LlmProvider: Send + Sync {
-    async fn generate_script(&self, system_prompt: &str, user_prompt: &str) -> Result<LlmScriptResponse>;
+    async fn generate_script(
+        &self,
+        system_prompt: &str,
+        user_prompt: &str,
+    ) -> Result<LlmScriptResponse>;
 }

@@ -8,7 +8,9 @@ use tracing::{info, warn};
 
 use crate::audio::{concatenate_wav_buffers, AudioTechnicalReviewer};
 use crate::config::Config;
-use crate::embeddings::{ollama::OllamaEmbeddingProvider, openai::OpenAiEmbeddingProvider, EmbeddingProvider};
+use crate::embeddings::{
+    ollama::OllamaEmbeddingProvider, openai::OpenAiEmbeddingProvider, EmbeddingProvider,
+};
 use crate::llm::{
     anthropic::AnthropicProvider, ollama_native::OllamaNativeProvider,
     openai_compatible::OpenAiCompatibleProvider, LlmProvider,
@@ -49,10 +51,9 @@ impl EpisodeGenerator {
                 config.llm.model.clone(),
             )),
             "anthropic" => {
-                let api_key = config
-                    .llm
-                    .resolve_api_key()
-                    .ok_or_else(|| anyhow!("Variável de ambiente para a API Key da Anthropic não definida"))?;
+                let api_key = config.llm.resolve_api_key().ok_or_else(|| {
+                    anyhow!("Variável de ambiente para a API Key da Anthropic não definida")
+                })?;
                 Arc::new(AnthropicProvider::new(api_key, config.llm.model.clone()))
             }
             provider => return Err(anyhow!("Provedor LLM desconhecido: {}", provider)),
@@ -82,10 +83,9 @@ impl EpisodeGenerator {
         let tts: Arc<dyn TtsProvider> = match config.tts.provider.as_str() {
             "piper" => Arc::new(PiperProvider::new(config.tts.piper_path.clone())),
             "elevenlabs" => {
-                let api_key = config
-                    .tts
-                    .resolve_elevenlabs_api_key()
-                    .ok_or_else(|| anyhow!("Variável de ambiente para a ElevenLabs API Key não definida"))?;
+                let api_key = config.tts.resolve_elevenlabs_api_key().ok_or_else(|| {
+                    anyhow!("Variável de ambiente para a ElevenLabs API Key não definida")
+                })?;
                 Arc::new(ElevenLabsProvider::new(api_key))
             }
             provider => return Err(anyhow!("Provedor de TTS desconhecido: {}", provider)),
@@ -180,7 +180,10 @@ impl EpisodeGenerator {
             ));
         }
 
-        info!("6/7 Sintetizando falas em áudio com TTS ({})", self.config.tts.provider);
+        info!(
+            "6/7 Sintetizando falas em áudio com TTS ({})",
+            self.config.tts.provider
+        );
         let mut audio_buffers = Vec::new();
         let mut total_word_count = 0;
 
@@ -192,7 +195,12 @@ impl EpisodeGenerator {
                 &self.config.tts.specialist_voice
             };
 
-            info!("Sintetizando fala {}/{} [{}]", i + 1, script_resp.dialogue.len(), turn.speaker);
+            info!(
+                "Sintetizando fala {}/{} [{}]",
+                i + 1,
+                script_resp.dialogue.len(),
+                turn.speaker
+            );
             let wav_buf = self.tts.synthesize(&turn.text, voice).await?;
             audio_buffers.push(wav_buf);
         }
@@ -200,7 +208,8 @@ impl EpisodeGenerator {
         let final_audio_wav = concatenate_wav_buffers(&audio_buffers, 300)?;
 
         info!("7/7 [Revisor Técnico de Áudio] Inspecionando integridade da faixa WAV gerada...");
-        let audio_report = AudioTechnicalReviewer::review_wav_buffer(&final_audio_wav, total_word_count)?;
+        let audio_report =
+            AudioTechnicalReviewer::review_wav_buffer(&final_audio_wav, total_word_count)?;
 
         if !audio_report.is_valid {
             return Err(anyhow!(

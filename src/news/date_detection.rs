@@ -24,7 +24,9 @@ pub async fn detect_published_date(url: &str, html: &str) -> Option<DateTime<Utc
 
 async fn try_rss_autodiscovery(base_url: &str, html: &str) -> Option<DateTime<Utc>> {
     let document = Html::parse_document(html);
-    let selector = Selector::parse("link[type='application/rss+xml'], link[type='application/atom+xml']").ok()?;
+    let selector =
+        Selector::parse("link[type='application/rss+xml'], link[type='application/atom+xml']")
+            .ok()?;
 
     for element in document.select(&selector) {
         if let Some(href) = element.value().attr("href") {
@@ -41,7 +43,9 @@ async fn try_rss_autodiscovery(base_url: &str, html: &str) -> Option<DateTime<Ut
                     if let Ok(bytes) = resp.bytes().await {
                         if let Ok(feed) = feed_rs::parser::parse(&bytes[..]) {
                             if let Some(first_entry) = feed.entries.first() {
-                                if let Some(published) = first_entry.published.or(first_entry.updated) {
+                                if let Some(published) =
+                                    first_entry.published.or(first_entry.updated)
+                                {
                                     return Some(published);
                                 }
                             }

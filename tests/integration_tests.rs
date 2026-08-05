@@ -10,7 +10,13 @@ use tempfile::tempdir;
 
 #[test]
 fn test_cli_parsing_english_commands() {
-    let args = vec!["pheme", "generate", "https://example.com/news", "--duration", "short"];
+    let args = vec![
+        "pheme",
+        "generate",
+        "https://example.com/news",
+        "--duration",
+        "short",
+    ];
     let cli = Cli::try_parse_from(args).unwrap();
     if let Some(Commands::Generate { url, duration }) = cli.command {
         assert_eq!(url, "https://example.com/news");
@@ -65,9 +71,27 @@ fn test_memory_store_end_to_end() -> Result<()> {
     let embedding2 = vec![0.1, 0.25, 0.85, 0.38];
     let embedding3 = vec![-0.9, 0.0, 0.1, -0.2];
 
-    store.save_episode("Episódio 1 - IA", "Resumo sobre inteligência artificial", &["IA".into()], Utc::now(), &embedding1)?;
-    store.save_episode("Episódio 2 - Robótica", "Resumo sobre robôs", &["Robôs".into()], Utc::now(), &embedding2)?;
-    store.save_episode("Episódio 3 - Culinária", "Receita de bolo", &["Comida".into()], Utc::now(), &embedding3)?;
+    store.save_episode(
+        "Episódio 1 - IA",
+        "Resumo sobre inteligência artificial",
+        &["IA".into()],
+        Utc::now(),
+        &embedding1,
+    )?;
+    store.save_episode(
+        "Episódio 2 - Robótica",
+        "Resumo sobre robôs",
+        &["Robôs".into()],
+        Utc::now(),
+        &embedding2,
+    )?;
+    store.save_episode(
+        "Episódio 3 - Culinária",
+        "Receita de bolo",
+        &["Comida".into()],
+        Utc::now(),
+        &embedding3,
+    )?;
 
     let query_embedding = vec![0.1, 0.2, 0.88, 0.4];
     let similar = store.find_similar_episodes(&query_embedding, 0.6, 10)?;
@@ -129,7 +153,8 @@ fn test_news_reviewer_validation() {
     let paywalled_art = Article {
         url: "https://paywall.example.com".into(),
         title: "Notícia Bloqueada".into(),
-        content: "Para continuar lendo este artigo exclusivo, assine para ler na nossa plataforma.".into(),
+        content: "Para continuar lendo este artigo exclusivo, assine para ler na nossa plataforma."
+            .into(),
         published_at: None,
     };
 

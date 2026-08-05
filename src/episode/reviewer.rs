@@ -67,9 +67,15 @@ impl ScriptFidelityReviewer {
         );
 
         // Se a chamada de auditoria via LLM for bem-sucedida, combina com as heurísticas
-        if let Ok(llm_eval) = llm.generate_script(review_system_prompt, &review_user_prompt).await {
+        if let Ok(llm_eval) = llm
+            .generate_script(review_system_prompt, &review_user_prompt)
+            .await
+        {
             // Reutiliza o campo summary como observação se parseado
-            observations.push(format!("Auditoria LLM concluída. Título verificado: '{}'", llm_eval.episode_title));
+            observations.push(format!(
+                "Auditoria LLM concluída. Título verificado: '{}'",
+                llm_eval.episode_title
+            ));
         }
 
         let is_coherent = score >= 0.5 && !script.dialogue.is_empty();

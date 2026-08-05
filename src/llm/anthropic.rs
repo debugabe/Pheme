@@ -18,7 +18,11 @@ impl AnthropicProvider {
 
 #[async_trait]
 impl LlmProvider for AnthropicProvider {
-    async fn generate_script(&self, system_prompt: &str, user_prompt: &str) -> Result<LlmScriptResponse> {
+    async fn generate_script(
+        &self,
+        system_prompt: &str,
+        user_prompt: &str,
+    ) -> Result<LlmScriptResponse> {
         let client = Client::new();
         let endpoint = "https://api.anthropic.com/v1/messages";
 
@@ -50,8 +54,12 @@ impl LlmProvider for AnthropicProvider {
 
         // Tenta extrair bloco JSON da resposta
         let json_str = clean_json_text(content_text);
-        let parsed: LlmScriptResponse = serde_json::from_str(&json_str)
-            .with_context(|| format!("Falha ao parsear JSON retornado pela Anthropic: {}", content_text))?;
+        let parsed: LlmScriptResponse = serde_json::from_str(&json_str).with_context(|| {
+            format!(
+                "Falha ao parsear JSON retornado pela Anthropic: {}",
+                content_text
+            )
+        })?;
 
         Ok(parsed)
     }

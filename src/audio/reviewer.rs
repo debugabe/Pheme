@@ -22,7 +22,8 @@ impl AudioTechnicalReviewer {
 
         let spec = reader.spec();
         let num_samples = reader.len();
-        let duration_seconds = num_samples as f32 / (spec.sample_rate as f32 * spec.channels as f32);
+        let duration_seconds =
+            num_samples as f32 / (spec.sample_rate as f32 * spec.channels as f32);
 
         let mut max_amplitude: f32 = 0.0;
         let mut warnings = Vec::new();

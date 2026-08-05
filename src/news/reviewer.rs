@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use super::Article;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NewsReviewReport {
@@ -19,7 +19,9 @@ impl NewsReviewer {
         let word_count = article.content.split_whitespace().count();
 
         if char_count < 150 && word_count < 25 {
-            warnings.push("Conteúdo extremamente curto (menos de 25 palavras ou 150 caracteres).".into());
+            warnings.push(
+                "Conteúdo extremamente curto (menos de 25 palavras ou 150 caracteres).".into(),
+            );
             score -= 0.5;
         }
 
@@ -37,7 +39,10 @@ impl NewsReviewer {
 
         for kw in paywall_keywords {
             if lower_content.contains(kw) {
-                warnings.push(format!("Detectado possível indicador de bloqueio/paywall: '{}'", kw));
+                warnings.push(format!(
+                    "Detectado possível indicador de bloqueio/paywall: '{}'",
+                    kw
+                ));
                 score -= 0.4;
             }
         }
@@ -48,7 +53,8 @@ impl NewsReviewer {
         }
 
         if article.published_at.is_none() {
-            warnings.push("Data de publicação da notícia não foi detectada automaticamente.".into());
+            warnings
+                .push("Data de publicação da notícia não foi detectada automaticamente.".into());
             score -= 0.1;
         }
 

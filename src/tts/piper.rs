@@ -34,7 +34,9 @@ impl TtsProvider for PiperProvider {
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn()
-                .with_context(|| format!("Falha ao executar binário do Piper em '{}'", piper_bin))?;
+                .with_context(|| {
+                    format!("Falha ao executar binário do Piper em '{}'", piper_bin)
+                })?;
 
             if let Some(mut stdin) = child.stdin.take() {
                 stdin.write_all(text_owned.as_bytes())?;
@@ -55,7 +57,12 @@ impl TtsProvider for PiperProvider {
     }
 }
 
-fn wrap_raw_pcm_in_wav(pcm: &[u8], sample_rate: u32, channels: u16, bits_per_sample: u16) -> Result<Vec<u8>> {
+fn wrap_raw_pcm_in_wav(
+    pcm: &[u8],
+    sample_rate: u32,
+    channels: u16,
+    bits_per_sample: u16,
+) -> Result<Vec<u8>> {
     let spec = hound::WavSpec {
         channels,
         sample_rate,

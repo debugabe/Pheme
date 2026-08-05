@@ -21,6 +21,7 @@ pub struct EpisodeMetadata {
     pub specialist_domain: String,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn save_episode_output(
     base_output_dir: &Path,
     title: &str,
@@ -74,7 +75,10 @@ pub fn save_episode_output(
     md.push_str(&format!("# {}\n\n", title));
     md.push_str(&format!("**Data da Notícia**: {}\n", date_prefix));
     md.push_str(&format!("**Fonte**: {}\n", source_url));
-    md.push_str(&format!("**Participantes**: {} (Entrevistador) e {} (Especialista em {})\n\n", interviewer_name, specialist_name, specialist_domain));
+    md.push_str(&format!(
+        "**Participantes**: {} (Entrevistador) e {} (Especialista em {})\n\n",
+        interviewer_name, specialist_name, specialist_domain
+    ));
     md.push_str("## Resumo do Episódio\n\n");
     md.push_str(summary);
     md.push_str("\n\n## Tópicos Abordados\n\n");

@@ -25,7 +25,10 @@ async fn main() -> Result<()> {
             println!("Starting Pheme pipeline for URL: {}", url);
             let generator = EpisodeGenerator::new(cfg)?;
             let episode_path = generator.run_pipeline(&url).await?;
-            println!("\nEpisode successfully generated at:\n   {:?}", episode_path);
+            println!(
+                "\nEpisode successfully generated at:\n   {:?}",
+                episode_path
+            );
         }
         Some(Commands::Config { show }) => {
             let cfg = Config::load()?;
@@ -45,7 +48,9 @@ async fn main() -> Result<()> {
         }
         None => {
             // Executado apenas com `pheme`
-            let selected_lang = Config::load().map(|c| c.language).unwrap_or_else(|_| "pt-BR".into());
+            let selected_lang = Config::load()
+                .map(|c| c.language)
+                .unwrap_or_else(|_| "pt-BR".into());
             print_help_guide(&selected_lang);
         }
     }

@@ -1,7 +1,7 @@
 pub mod presets;
 
-use serde::{Deserialize, Serialize};
 use presets::PersonalityAxes;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Role {
@@ -25,7 +25,7 @@ impl Persona {
     pub fn build_prompt_instructions(&self) -> String {
         let axes = self.get_axes();
         let domain_str = self.domain.as_deref().unwrap_or("Tecnologia Geral");
-        
+
         match self.role {
             Role::Interviewer => format!(
                 "Você é {}, entrevistador(a) fixo(a) do podcast. Seu domínio de foco é {}.\n\

@@ -21,7 +21,11 @@ impl OllamaNativeProvider {
 
 #[async_trait]
 impl LlmProvider for OllamaNativeProvider {
-    async fn generate_script(&self, system_prompt: &str, user_prompt: &str) -> Result<LlmScriptResponse> {
+    async fn generate_script(
+        &self,
+        system_prompt: &str,
+        user_prompt: &str,
+    ) -> Result<LlmScriptResponse> {
         let client = Client::new();
         let endpoint = format!("{}/api/generate", self.base_url.trim_end_matches('/'));
 
@@ -49,8 +53,12 @@ impl LlmProvider for OllamaNativeProvider {
             .as_str()
             .ok_or_else(|| anyhow!("Resposta do Ollama sem o campo `response`"))?;
 
-        let parsed: LlmScriptResponse = serde_json::from_str(response_text)
-            .with_context(|| format!("Falha ao parsear o JSON de resposta do Ollama: {}", response_text))?;
+        let parsed: LlmScriptResponse = serde_json::from_str(response_text).with_context(|| {
+            format!(
+                "Falha ao parsear o JSON de resposta do Ollama: {}",
+                response_text
+            )
+        })?;
 
         Ok(parsed)
     }

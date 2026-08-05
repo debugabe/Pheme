@@ -23,7 +23,11 @@ impl OpenAiCompatibleProvider {
 
 #[async_trait]
 impl LlmProvider for OpenAiCompatibleProvider {
-    async fn generate_script(&self, system_prompt: &str, user_prompt: &str) -> Result<LlmScriptResponse> {
+    async fn generate_script(
+        &self,
+        system_prompt: &str,
+        user_prompt: &str,
+    ) -> Result<LlmScriptResponse> {
         let client = Client::new();
         let endpoint = format!("{}/chat/completions", self.base_url.trim_end_matches('/'));
 
@@ -47,7 +51,10 @@ impl LlmProvider for OpenAiCompatibleProvider {
 
         if !resp.status().is_success() {
             let err_text = resp.text().await.unwrap_or_default();
-            return Err(anyhow!("Erro retornado pela API OpenAI-Compatible: {}", err_text));
+            return Err(anyhow!(
+                "Erro retornado pela API OpenAI-Compatible: {}",
+                err_text
+            ));
         }
 
         let body: serde_json::Value = resp.json().await?;
@@ -55,8 +62,12 @@ impl LlmProvider for OpenAiCompatibleProvider {
             .as_str()
             .ok_or_else(|| anyhow!("Formato de resposta inesperado da API (sem content)"))?;
 
-        let parsed: LlmScriptResponse = serde_json::from_str(content)
-            .with_context(|| format!("Falha ao parsear JSON do roteiro retornado pela LLM: {}", content))?;
+        let parsed: LlmScriptResponse = serde_json::from_str(content).with_context(|| {
+            format!(
+                "Falha ao parsear JSON do roteiro retornado pela LLM: {}",
+                content
+            )
+        })?;
 
         Ok(parsed)
     }

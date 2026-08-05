@@ -8,7 +8,9 @@ pub fn build_system_prompt(
     language: &str,
 ) -> String {
     let duration_desc = match duration_preset {
-        "curto" => "Curto (~3 a 5 minutos de conversa, aproximadamente 6 a 10 trocas de fala totais).",
+        "curto" => {
+            "Curto (~3 a 5 minutos de conversa, aproximadamente 6 a 10 trocas de fala totais)."
+        }
         "longo" => "Longo (~15+ minutos de conversa aprofundada, cerca de 20 a 30 trocas de fala).",
         _ => "Médio (~7 a 10 minutos de conversa, aproximadamente 12 a 18 trocas de fala).",
     };
@@ -52,7 +54,7 @@ pub fn build_user_prompt(
 ) -> String {
     let mut prompt = String::new();
 
-    prompt.push_str(&format!("MATÉRIA/NOTÍCIA PRINCIPAL DO DIA:\n"));
+    prompt.push_str("MATÉRIA/NOTÍCIA PRINCIPAL DO DIA:\n");
     prompt.push_str(&format!("Título: {}\n", article_title));
     if let Some(date) = article_date {
         prompt.push_str(&format!("Data da publicação: {}\n", date));
@@ -67,9 +69,11 @@ pub fn build_user_prompt(
                 mem.title, sim, mem.summary
             ));
         }
-        prompt.push_str("\n");
+        prompt.push('\n');
     }
 
-    prompt.push_str("Por favor, gere o roteiro completo em formato JSON respeitando o schema do System Prompt.");
+    prompt.push_str(
+        "Por favor, gere o roteiro completo em formato JSON respeitando o schema do System Prompt.",
+    );
     prompt
 }

@@ -146,12 +146,9 @@ pub fn run_wizard() -> Result<()> {
 
     let available_moods = get_available_moods();
 
-    let interviewer_mood = Select::new(
-        "Mood do Entrevistador(a):",
-        available_moods.clone(),
-    )
-    .prompt()?
-    .to_string();
+    let interviewer_mood = Select::new("Mood do Entrevistador(a):", available_moods.clone())
+        .prompt()?
+        .to_string();
 
     let specialist_name = Text::new("Nome Padrão do Especialista:")
         .with_default("Dr. Silva")
@@ -161,12 +158,9 @@ pub fn run_wizard() -> Result<()> {
         .with_default("Inteligência Artificial")
         .prompt()?;
 
-    let specialist_mood = Select::new(
-        "Mood Padrão do Especialista:",
-        available_moods.clone(),
-    )
-    .prompt()?
-    .to_string();
+    let specialist_mood = Select::new("Mood Padrão do Especialista:", available_moods.clone())
+        .prompt()?
+        .to_string();
 
     // Defaults
     println!("\n--- Padrões Gerais ---");

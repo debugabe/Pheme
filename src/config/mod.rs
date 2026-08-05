@@ -2,8 +2,8 @@ pub mod wizard;
 
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::fs;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmConfig {
@@ -100,7 +100,7 @@ impl Config {
         let path = Self::find_config_file()?;
         let content = fs::read_to_string(&path)
             .with_context(|| format!("Falha ao ler o arquivo de configuração em {:?}", path))?;
-        
+
         let config: Config = toml::from_str(&content)
             .with_context(|| format!("Falha no parsing TOML do arquivo {:?}", path))?;
 

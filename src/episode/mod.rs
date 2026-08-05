@@ -2,9 +2,10 @@ pub mod reviewer;
 pub mod script;
 
 use anyhow::{anyhow, Result};
+use colored::*;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tracing::{info, warn};
+
 
 use crate::audio::{concatenate_wav_buffers, AudioTechnicalReviewer};
 use crate::config::Config;
@@ -106,34 +107,104 @@ impl EpisodeGenerator {
     }
 
     pub async fn run_pipeline(&self, url: &str) -> Result<PathBuf> {
-        info!("1/7 Buscando matéria em: {}", url);
-        let article = load_article_from_url(url).await?;
+        println!(
+            "\n{}",
+            "================================================================"
+                .truecolor(220, 20, 60)
+        );
+        println!(
+            "{}",
+            "            PHEME EPISODE GENERATION PIPELINE                  "
+                .bold()
+                .white()
+        );
+        println!(
+            "{}\n",
+            "================================================================"
+                .truecolor(220, 20, 60)
+        );
 
-        info!("2/7 [Revisor de Notícias] Validando qualidade do artigo capturado...");
+        // Step 1
+        println!(
+            "{}",
+            "[1/7] Fetching news article from URL...".bold().cyan()
+        );
+        println!("      Target URL : {}", url.yellow());
+        let article = load_article_from_url(url).await?;
+        println!("      Title      : {}", article.title.white().bold());
+        println!(
+            "      Word Count : {} words",
+            article
+                .content
+                .split_whitespace()
+                .count()
+                .to_string()
+                .yellow()
+        );
+        if let Some(pub_date) = article.published_at {
+            println!(
+                "      Published  : {}",
+                pub_date.to_rfc3339().bright_black()
+            );
+        }
+
+        // Step 2
+        println!("\n{}", "[2/7] News Quality Review...".bold().cyan());
         let news_report = NewsReviewer::review_article(&article);
+        println!("      Quality Score : {:.2}/1.00", news_report.score);
         if !news_report.is_valid {
             for warn_msg in &news_report.warnings {
-                warn!("Aviso na matéria: {}", warn_msg);
+                println!("      Warning       : {}", warn_msg.red());
             }
             return Err(anyhow!(
-                "A matéria capturada foi rejeitada pelo Revisor de Notícias (Score: {:.2}). Motivos: {:?}",
+                "Article rejected by News Reviewer (Score: {:.2}). Reasons: {:?}",
                 news_report.score,
                 news_report.warnings
             ));
         } else if !news_report.warnings.is_empty() {
             for warn_msg in &news_report.warnings {
-                warn!("Aviso de qualidade na notícia: {}", warn_msg);
+                println!("      Notice        : {}", warn_msg.yellow());
             }
+        } else {
+            println!(
+                "      Status        : {}",
+                "PASSED (No paywalls or scraping errors)".green()
+            );
         }
 
-        info!("3/7 Pesquisando memórias de episódios anteriores...");
+        // Step 3
+        println!(
+            "\n{}",
+            "[3/7] Searching Semantic Vector Memory...".bold().cyan()
+        );
         let article_embedding = self.embedding.generate_embedding(&article.content).await?;
         let related_memories = self
             .memory_store
             .find_similar_episodes(&article_embedding, 0.70, 3)
             .unwrap_or_default();
+        println!(
+            "      Related Episodes Found : {}",
+            related_memories.len().to_string().yellow()
+        );
+        for (idx, mem) in related_memories.iter().enumerate() {
+            println!(
+                "        {}. {} (Similarity: {:.2})",
+                idx + 1,
+                mem.0.title.white(),
+                mem.1
+            );
+        }
 
-        info!("4/7 Gerando roteiro via LLM ({})", self.config.llm.model);
+        // Step 4
+        println!(
+            "\n{}",
+            format!(
+                "[4/7] Generating Script via LLM ({})",
+                self.config.llm.model
+            )
+            .bold()
+            .cyan()
+        );
         let interviewer_persona = Persona {
             name: self.config.personas.interviewer.name.clone(),
             role: Role::Interviewer,
@@ -162,9 +233,26 @@ impl EpisodeGenerator {
         );
 
         let script_resp = self.llm.generate_script(&sys_prompt, &user_prompt).await?;
-        info!("Roteiro gerado! Título: '{}'", script_resp.episode_title);
+        println!(
+            "      Episode Title : {}",
+            script_resp.episode_title.yellow().bold()
+        );
+        println!(
+            "      Summary       : {}",
+            script_resp.summary.bright_black()
+        );
+        println!(
+            "      Dialogue Turns: {}",
+            script_resp.dialogue.len().to_string().green().bold()
+        );
 
-        info!("5/7 [Revisor de Fidelidade] Auditando roteiro contra a notícia original...");
+        // Step 5
+        println!(
+            "\n{}",
+            "[5/7] Script Fidelity Review (Anti-Hallucination Audit)..."
+                .bold()
+                .cyan()
+        );
         let fidelity_report = ScriptFidelityReviewer::review_fidelity(
             self.llm.as_ref(),
             &article.title,
@@ -174,54 +262,94 @@ impl EpisodeGenerator {
         .await?;
 
         if !fidelity_report.is_coherent {
+            println!("      Coherence Status : {}", "FAILED".red().bold());
+            for obs in &fidelity_report.observations {
+                println!("      Observation      : {}", obs.red());
+            }
             return Err(anyhow!(
-                "O roteiro gerado falhou na auditoria de fidelidade com a notícia: {:?}",
+                "Script failed fidelity audit: {:?}",
                 fidelity_report.observations
             ));
+        } else {
+            println!(
+                "      Coherence Status : {}",
+                "PASSED (Verified against original source)".green()
+            );
+            for obs in &fidelity_report.observations {
+                println!("      Observation      : {}", obs.bright_black());
+            }
         }
 
-        info!(
-            "6/7 Sintetizando falas em áudio com TTS ({})",
-            self.config.tts.provider
+        // Step 6
+        println!(
+            "\n{}",
+            format!(
+                "[6/7] Synthesizing Audio Turns via TTS ({})",
+                self.config.tts.provider
+            )
+            .bold()
+            .cyan()
         );
         let mut audio_buffers = Vec::new();
         let mut total_word_count = 0;
 
         for (i, turn) in script_resp.dialogue.iter().enumerate() {
-            total_word_count += turn.text.split_whitespace().count();
+            let turn_words = turn.text.split_whitespace().count();
+            total_word_count += turn_words;
             let voice = if turn.speaker == "interviewer" {
                 &self.config.tts.interviewer_voice
             } else {
                 &self.config.tts.specialist_voice
             };
 
-            info!(
-                "Sintetizando fala {}/{} [{}]",
+            let speaker_name = if turn.speaker == "interviewer" {
+                &interviewer_persona.name
+            } else {
+                &specialist_persona.name
+            };
+
+            println!(
+                "      Turn {:>2}/{} [{}] ({} words) -> {}",
                 i + 1,
                 script_resp.dialogue.len(),
-                turn.speaker
+                speaker_name.yellow(),
+                turn_words,
+                voice.bright_black()
             );
+
             let wav_buf = self.tts.synthesize(&turn.text, voice).await?;
             audio_buffers.push(wav_buf);
         }
 
         let final_audio_wav = concatenate_wav_buffers(&audio_buffers, 300)?;
 
-        info!("7/7 [Revisor Técnico de Áudio] Inspecionando integridade da faixa WAV gerada...");
+        // Step 7
+        println!(
+            "\n{}",
+            "[7/7] Technical Audio Review & Saving Output..."
+                .bold()
+                .cyan()
+        );
         let audio_report =
             AudioTechnicalReviewer::review_wav_buffer(&final_audio_wav, total_word_count)?;
 
         if !audio_report.is_valid {
+            for warn_msg in &audio_report.warnings {
+                println!("      Audio Warning : {}", warn_msg.red());
+            }
             return Err(anyhow!(
-                "O áudio final gerado falhou na revisão técnica: {:?}",
+                "Final audio failed technical review: {:?}",
                 audio_report.warnings
             ));
         }
 
-        info!(
-            "Áudio aprovado pelo Revisor! Duração: {:.1}s, Freq: {}Hz, Canais: {}",
-            audio_report.duration_seconds, audio_report.sample_rate, audio_report.channels
+        println!(
+            "      Duration    : {:.1} seconds",
+            audio_report.duration_seconds.to_string().green().bold()
         );
+        println!("      Sample Rate : {} Hz", audio_report.sample_rate);
+        println!("      Channels    : {}", audio_report.channels);
+        println!("      Total Words : {}", total_word_count);
 
         let episode_embedding = self
             .embedding
@@ -255,6 +383,8 @@ impl EpisodeGenerator {
             &script_resp,
             &final_audio_wav,
         )?;
+
+        println!("      Files Saved : audio.wav, transcript.md, metadata.json");
 
         Ok(episode_dir)
     }

@@ -21,312 +21,334 @@ pub fn run_wizard() -> Result<()> {
 
     let is_english = language.starts_with("en");
 
-    // LLM Setup
-    if is_english {
-        println!("\n--- LLM Configuration (Script Generation) ---");
+    let mode_lbl = if is_english {
+        "Select setup mode / Selecione o modo de configuração:"
     } else {
-        println!("\n--- Configuração de LLM (Roteiro) ---");
-    }
-
-    let llm_providers = vec!["openai_compatible", "ollama_native", "anthropic"];
-    let llm_prompt_lbl = if is_english {
-        "LLM Provider:"
-    } else {
-        "Provedor de LLM:"
+        "Selecione o modo de configuração:"
     };
 
-    let llm_provider = Select::new(llm_prompt_lbl, llm_providers)
+    let mode_options = if is_english {
+        vec!["API KEY (Cloud / Nuvem)", "LOCAL (Offline / Local)"]
+    } else {
+        vec!["API KEY (Nuvem)", "LOCAL (Offline / Local)"]
+    };
+
+    let chosen_mode = Select::new(mode_lbl, mode_options)
         .prompt()
-        .context("Failed to select LLM provider")?
-        .to_string();
+        .context("Failed to select setup mode")?;
 
-    let base_url_lbl = if is_english {
-        "LLM API Base URL:"
-    } else {
-        "URL Base da API LLM:"
-    };
+    let is_cloud_mode = chosen_mode.contains("API KEY") || chosen_mode.contains("Nuvem");
 
-    let llm_base_url = if llm_provider == "openai_compatible" {
-        Some(
-            Text::new(base_url_lbl)
-                .with_default("https://api.openai.com/v1")
-                .prompt()?,
-        )
-    } else if llm_provider == "anthropic" {
-        Some("https://api.anthropic.com".to_string())
-    } else {
-        None
-    };
-
-    let api_key_default = match llm_provider.as_str() {
-        "anthropic" => "ANTHROPIC_API_KEY",
-        "ollama_native" => "OLLAMA_API_KEY",
-        _ => "OPENAI_API_KEY",
-    };
-
-    let api_key_lbl = if is_english {
-        "Environment variable name for API key (press Enter to skip for local Ollama):"
-    } else {
-        "Nome da variável de ambiente com a chave de API (pressione Enter para ignorar no Ollama local):"
-    };
-
-    let api_key_input = Text::new(api_key_lbl)
-        .with_default(if llm_provider == "ollama_native" {
-            ""
+    // 1. LLM Setup
+    let (llm_provider, llm_base_url, llm_api_key_env, llm_model) = if is_cloud_mode {
+        if is_english {
+            println!("\n--- Cloud LLM Configuration (Script Generation) ---");
         } else {
-            api_key_default
-        })
-        .prompt()?;
+            println!("\n--- Configuração de LLM em Nuvem (Roteiro) ---");
+        }
 
-    let llm_api_key_env = if api_key_input.trim().is_empty() {
-        None
-    } else {
-        Some(api_key_input.trim().to_string())
-    };
-
-    let default_model = match llm_provider.as_str() {
-        "anthropic" => "claude-3-5-sonnet-20241022",
-        "ollama_native" => "llama3",
-        _ => "gpt-4o-mini",
-    };
-
-    let model_lbl = if is_english {
-        "LLM Model:"
-    } else {
-        "Modelo de LLM:"
-    };
-
-    let llm_model = Text::new(model_lbl).with_default(default_model).prompt()?;
-
-    // Embedding Setup
-    if is_english {
-        println!("\n--- Embedding Configuration (Semantic Memory) ---");
-    } else {
-        println!("\n--- Configuração de Embeddings (Memória Semântica) ---");
-    }
-
-    let emb_providers = vec!["openai", "ollama"];
-    let emb_prov_lbl = if is_english {
-        "Embedding Provider:"
-    } else {
-        "Provedor de Embeddings:"
-    };
-
-    let emb_provider = Select::new(emb_prov_lbl, emb_providers)
+        let llm_providers = vec!["openai_compatible", "anthropic"];
+        let llm_provider = Select::new(
+            if is_english {
+                "LLM Provider:"
+            } else {
+                "Provedor de LLM:"
+            },
+            llm_providers,
+        )
         .prompt()?
         .to_string();
 
-    let emb_url_lbl = if is_english {
-        "Embedding API Base URL:"
-    } else {
-        "URL Base da API de Embedding:"
-    };
-
-    let emb_base_url = if emb_provider == "openai" {
-        Some(
-            Text::new(emb_url_lbl)
+        let base_url = if llm_provider == "openai_compatible" {
+            Some(
+                Text::new(if is_english {
+                    "LLM API Base URL:"
+                } else {
+                    "URL Base da API LLM:"
+                })
                 .with_default("https://api.openai.com/v1")
                 .prompt()?,
-        )
-    } else {
-        None
-    };
+            )
+        } else {
+            Some("https://api.anthropic.com".to_string())
+        };
 
-    let emb_key_lbl = if is_english {
-        "Environment variable for Embedding API key (press Enter to skip for local Ollama):"
-    } else {
-        "Variável de ambiente para chave de Embedding (pressione Enter para ignorar no Ollama local):"
-    };
-
-    let emb_key_input = Text::new(emb_key_lbl)
-        .with_default(if emb_provider == "ollama" {
-            ""
+        let default_env_var = if llm_provider == "anthropic" {
+            "ANTHROPIC_API_KEY"
         } else {
             "OPENAI_API_KEY"
-        })
-        .prompt()?;
+        };
 
-    let emb_api_key_env = if emb_key_input.trim().is_empty() {
-        None
-    } else {
-        Some(emb_key_input.trim().to_string())
-    };
-
-    let emb_model_lbl = if is_english {
-        "Embedding Model:"
-    } else {
-        "Modelo de Embedding:"
-    };
-
-    let emb_model = Text::new(emb_model_lbl)
-        .with_default(if emb_provider == "openai" {
-            "text-embedding-3-small"
+        let api_key_env = Text::new(if is_english {
+            "Environment variable for API key:"
         } else {
-            "nomic-embed-text"
+            "Variável de ambiente para chave de API:"
         })
+        .with_default(default_env_var)
         .prompt()?;
 
-    // TTS Setup
-    if is_english {
-        println!("\n--- TTS Configuration (Voice) ---");
-    } else {
-        println!("\n--- Configuração de TTS (Voz) ---");
-    }
-
-    let tts_providers = vec!["piper", "elevenlabs"];
-    let tts_prov_lbl = if is_english {
-        "TTS Provider:"
-    } else {
-        "Provedor de TTS:"
-    };
-
-    let tts_provider = Select::new(tts_prov_lbl, tts_providers)
-        .prompt()?
-        .to_string();
-
-    let piper_path_lbl = if is_english {
-        "Path to Piper executable binary:"
-    } else {
-        "Caminho para o binário executável do Piper:"
-    };
-
-    let piper_path = if tts_provider == "piper" {
-        Some(Text::new(piper_path_lbl).with_default("piper").prompt()?)
-    } else {
-        None
-    };
-
-    let int_voice_lbl = if is_english {
-        "Interviewer voice model / Voice ID:"
-    } else {
-        "Voz do(a) Entrevistador(a):"
-    };
-
-    let interviewer_voice = Text::new(int_voice_lbl)
-        .with_default(if tts_provider == "piper" {
-            "pt_BR-faber-medium.onnx"
+        let default_model = if llm_provider == "anthropic" {
+            "claude-3-5-sonnet-20241022"
         } else {
-            "21m00Tcm4TlvDq8ikWAM"
-        })
-        .prompt()?;
+            "gpt-4o-mini"
+        };
 
-    let spec_voice_lbl = if is_english {
-        "Interviewee / Specialist voice model / Voice ID:"
-    } else {
-        "Voz do(a) Entrevistado(a) / Especialista:"
-    };
-
-    let specialist_voice = Text::new(spec_voice_lbl)
-        .with_default(if tts_provider == "piper" {
-            "pt_BR-carlos-medium.onnx"
+        let model = Text::new(if is_english {
+            "LLM Model:"
         } else {
-            "AZnzlk1XvdvUeBnXmlld"
+            "Modelo de LLM:"
         })
+        .with_default(default_model)
         .prompt()?;
 
-    let elevenlabs_key_lbl = if is_english {
-        "Environment variable with ElevenLabs key:"
+        (llm_provider, base_url, Some(api_key_env), model)
     } else {
-        "Variável de ambiente com chave ElevenLabs:"
+        if is_english {
+            println!("\n--- Local LLM Configuration (Ollama) ---");
+        } else {
+            println!("\n--- Configuração de LLM Local (Ollama) ---");
+        }
+
+        let base_url = Text::new(if is_english {
+            "Ollama Base URL:"
+        } else {
+            "URL Base do Ollama:"
+        })
+        .with_default("http://localhost:11434")
+        .prompt()?;
+
+        let model = Text::new(if is_english {
+            "Ollama Model:"
+        } else {
+            "Modelo no Ollama:"
+        })
+        .with_default("llama3")
+        .prompt()?;
+
+        ("ollama_native".to_string(), Some(base_url), None, model)
     };
 
-    let elevenlabs_api_key_env = if tts_provider == "elevenlabs" {
-        Some(
-            Text::new(elevenlabs_key_lbl)
-                .with_default("ELEVENLABS_API_KEY")
-                .prompt()?,
+    // 2. Embedding Setup
+    let (emb_provider, emb_base_url, emb_api_key_env, emb_model) = if is_cloud_mode {
+        if is_english {
+            println!("\n--- Cloud Embedding Configuration ---");
+        } else {
+            println!("\n--- Configuração de Embedding em Nuvem ---");
+        }
+
+        let base_url = Text::new(if is_english {
+            "Embedding API Base URL:"
+        } else {
+            "URL Base do Embedding:"
+        })
+        .with_default("https://api.openai.com/v1")
+        .prompt()?;
+
+        let api_key_env = Text::new(if is_english {
+            "Environment variable for Embedding key:"
+        } else {
+            "Variável de ambiente para chave de Embedding:"
+        })
+        .with_default("OPENAI_API_KEY")
+        .prompt()?;
+
+        let model = Text::new(if is_english {
+            "Embedding Model:"
+        } else {
+            "Modelo de Embedding:"
+        })
+        .with_default("text-embedding-3-small")
+        .prompt()?;
+
+        (
+            "openai".to_string(),
+            Some(base_url),
+            Some(api_key_env),
+            model,
         )
     } else {
-        None
+        if is_english {
+            println!("\n--- Local Embedding Configuration (Ollama) ---");
+        } else {
+            println!("\n--- Configuração de Embedding Local (Ollama) ---");
+        }
+
+        let base_url = Text::new(if is_english {
+            "Ollama Base URL:"
+        } else {
+            "URL Base do Ollama:"
+        })
+        .with_default("http://localhost:11434")
+        .prompt()?;
+
+        let model = Text::new(if is_english {
+            "Ollama Embedding Model:"
+        } else {
+            "Modelo de Embedding no Ollama:"
+        })
+        .with_default("nomic-embed-text")
+        .prompt()?;
+
+        ("ollama".to_string(), Some(base_url), None, model)
     };
 
-    // Personas Setup
+    // 3. TTS Setup
+    let (tts_provider, piper_path, interviewer_voice, specialist_voice, elevenlabs_api_key_env) =
+        if is_cloud_mode {
+            if is_english {
+                println!("\n--- Cloud TTS Configuration (ElevenLabs) ---");
+            } else {
+                println!("\n--- Configuração de TTS em Nuvem (ElevenLabs) ---");
+            }
+
+            let api_key_env = Text::new(if is_english {
+                "Environment variable for ElevenLabs key:"
+            } else {
+                "Variável de ambiente com chave ElevenLabs:"
+            })
+            .with_default("ELEVENLABS_API_KEY")
+            .prompt()?;
+
+            let int_voice = Text::new(if is_english {
+                "Interviewer Voice ID:"
+            } else {
+                "Voice ID do(a) Entrevistador(a):"
+            })
+            .with_default("21m00Tcm4TlvDq8ikWAM")
+            .prompt()?;
+
+            let spec_voice = Text::new(if is_english {
+                "Interviewee Voice ID:"
+            } else {
+                "Voice ID do(a) Entrevistado(a):"
+            })
+            .with_default("AZnzlk1XvdvUeBnXmlld")
+            .prompt()?;
+
+            (
+                "elevenlabs".to_string(),
+                None,
+                int_voice,
+                spec_voice,
+                Some(api_key_env),
+            )
+        } else {
+            if is_english {
+                println!("\n--- Local TTS Configuration (Piper) ---");
+            } else {
+                println!("\n--- Configuração de TTS Local (Piper) ---");
+            }
+
+            let p_path = Text::new(if is_english {
+                "Path to Piper executable binary:"
+            } else {
+                "Caminho para o executável do Piper:"
+            })
+            .with_default("piper")
+            .prompt()?;
+
+            let int_voice = Text::new(if is_english {
+                "Interviewer ONNX Voice file:"
+            } else {
+                "Arquivo de voz ONNX do(a) Entrevistador(a):"
+            })
+            .with_default("pt_BR-faber-medium.onnx")
+            .prompt()?;
+
+            let spec_voice = Text::new(if is_english {
+                "Interviewee ONNX Voice file:"
+            } else {
+                "Arquivo de voz ONNX do(a) Entrevistado(a):"
+            })
+            .with_default("pt_BR-carlos-medium.onnx")
+            .prompt()?;
+
+            (
+                "piper".to_string(),
+                Some(p_path),
+                int_voice,
+                spec_voice,
+                None,
+            )
+        };
+
+    // 4. Personas Setup
     if is_english {
         println!("\n--- Personas Configuration ---");
     } else {
         println!("\n--- Configuração das Personas ---");
     }
 
-    let int_name_lbl = if is_english {
+    let interviewer_name = Text::new(if is_english {
         "Interviewer name:"
     } else {
         "Nome do(a) Entrevistador(a):"
-    };
-
-    let interviewer_name = Text::new(int_name_lbl)
-        .with_default(if is_english {
-            "Interviewer"
-        } else {
-            "Entrevistador"
-        })
-        .prompt()?;
+    })
+    .with_default(if is_english {
+        "Interviewer"
+    } else {
+        "Entrevistador"
+    })
+    .prompt()?;
 
     let available_moods = get_available_moods();
 
-    let int_mood_lbl = if is_english {
-        "Interviewer mood:"
-    } else {
-        "Mood do(a) Entrevistador(a):"
-    };
+    let interviewer_mood = Select::new(
+        if is_english {
+            "Interviewer mood:"
+        } else {
+            "Mood do(a) Entrevistador(a):"
+        },
+        available_moods.clone(),
+    )
+    .prompt()?
+    .to_string();
 
-    let interviewer_mood = Select::new(int_mood_lbl, available_moods.clone())
-        .prompt()?
-        .to_string();
-
-    let spec_name_lbl = if is_english {
+    let specialist_name = Text::new(if is_english {
         "Interviewee / Specialist name:"
     } else {
         "Nome do(a) Entrevistado(a) / Especialista:"
-    };
-
-    let specialist_name = Text::new(spec_name_lbl)
-        .with_default(if is_english {
-            "Specialist"
-        } else {
-            "Especialista"
-        })
-        .prompt()?;
-
-    let spec_mood_lbl = if is_english {
-        "Interviewee / Specialist mood:"
+    })
+    .with_default(if is_english {
+        "Specialist"
     } else {
-        "Mood do(a) Entrevistado(a) / Especialista:"
-    };
+        "Especialista"
+    })
+    .prompt()?;
 
-    let specialist_mood = Select::new(spec_mood_lbl, available_moods.clone())
-        .prompt()?
-        .to_string();
+    let specialist_mood = Select::new(
+        if is_english {
+            "Interviewee / Specialist mood:"
+        } else {
+            "Mood do(a) Entrevistado(a) / Especialista:"
+        },
+        available_moods.clone(),
+    )
+    .prompt()?
+    .to_string();
 
-    // Defaults
+    // 5. Defaults
     if is_english {
         println!("\n--- General Defaults ---");
     } else {
         println!("\n--- Padrões Gerais ---");
     }
 
-    let out_dir_lbl = if is_english {
+    let output_dir = Text::new(if is_english {
         "Episode output directory:"
     } else {
         "Diretório de saída dos episódios:"
-    };
+    })
+    .with_default("./episodes")
+    .prompt()?;
 
-    let output_dir = Text::new(out_dir_lbl).with_default("./episodes").prompt()?;
-
-    let db_path_lbl = if is_english {
+    let db_path = Text::new(if is_english {
         "SQLite memory database path:"
     } else {
         "Caminho do banco de memória SQLite:"
-    };
-
-    let db_path = Text::new(db_path_lbl)
-        .with_default("~/.config/pheme/memory.db")
-        .prompt()?;
-
-    let duration_lbl = if is_english {
-        "Default episode duration:"
-    } else {
-        "Duração padrão dos episódios:"
-    };
+    })
+    .with_default("~/.config/pheme/memory.db")
+    .prompt()?;
 
     let duration_options = if is_english {
         vec!["short", "medium", "long"]
@@ -334,9 +356,16 @@ pub fn run_wizard() -> Result<()> {
         vec!["curto", "medio", "longo"]
     };
 
-    let duration_preset = Select::new(duration_lbl, duration_options)
-        .prompt()?
-        .to_string();
+    let duration_preset = Select::new(
+        if is_english {
+            "Default episode duration:"
+        } else {
+            "Duração padrão dos episódios:"
+        },
+        duration_options,
+    )
+    .prompt()?
+    .to_string();
 
     let config = Config {
         language,

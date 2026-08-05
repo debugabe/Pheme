@@ -1,9 +1,13 @@
+<p align="center">
+  <img src="pheme.png" alt="Pheme Logo" width="220"/>
+</p>
+
 # Pheme
 
 100% Rust CLI tool to generate audio podcast episodes from tech news using AI personas and semantic vector memory.
 
 [![Crates.io](https://img.shields.io/crates/v/pheme.svg)](https://crates.io/crates/pheme)
-[![CI](https://github.com/usuario/pheme/actions/workflows/ci.yml/badge.svg)](https://github.com/usuario/pheme/actions/workflows/ci.yml)
+[![CI](https://github.com/debugabe/Pheme/actions/workflows/ci.yml/badge.svg)](https://github.com/debugabe/Pheme/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/language-Rust-orange.svg)](https://www.rust-lang.org/)
 
@@ -33,8 +37,8 @@ cargo install pheme
 Or build from source:
 
 ```bash
-git clone https://github.com/usuario/pheme.git
-cd pheme
+git clone https://github.com/debugabe/Pheme.git
+cd Pheme
 cargo build --release
 ```
 

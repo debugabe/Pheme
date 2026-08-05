@@ -1,36 +1,36 @@
-# Guia de Contribuição — Pheme
+# Contributing to Pheme
 
-Agradecemos o seu interesse em contribuir para o **Pheme**! Este projeto é 100% código aberto sob a licença MIT e busca criar a melhor ferramenta CLI para transformação de notícias em podcasts educativos.
-
----
-
-## Princípios Arquiteturais do Projeto
-
-- **Monolito Modular em Rust**: Toda a aplicação roda em um único binário compilado.
-- **Traits de Abstração Plugáveis**:
-  - `LlmProvider` (`src/llm/mod.rs`): Para provedores de roteiro.
-  - `EmbeddingProvider` (`src/embeddings/mod.rs`): Para geração de vetores semânticos.
-  - `TtsProvider` (`src/tts/mod.rs`): Para síntese de áudio.
-- **Isolamento de Conhecimento**: O módulo `episode` é o único orquestrador que conhece todas as camadas. Módulos individuais de TTS e LLM não conversam diretamente com a memória.
-- **Erros Explícitos**: Não faça suposições silenciosas em campos de configuração ausentes.
+Thank you for your interest in contributing to **Pheme**! This project is 100% open source under the MIT License and aims to build the best CLI tool for transforming tech news articles into engaging audio podcasts.
 
 ---
 
-## Como Adicionar um Novo Provedor
+## Architectural Guidelines
 
-### 1. Novo Provedor de LLM
-- Se o serviço segue a especificação OpenAI (`/chat/completions`), basta usar a classe `OpenAiCompatibleProvider` alterando a `base_url` no `pheme.toml`.
-- Se o serviço exige payload/headers específicos, crie um novo arquivo em `src/llm/<provedor>.rs`, implemente o trait `LlmProvider` e registre a variante em `src/llm/mod.rs` e `src/episode/mod.rs`.
-
-### 2. Novo Provedor de TTS
-- Crie um arquivo em `src/tts/<provedor>.rs`.
-- Implemente `TtsProvider` assegurando o retorno de um buffer contendo áudio em formato **WAV**.
+- **Modular Monolith in Rust**: The entire application runs as a single compiled binary crate.
+- **Pluggable Trait Abstractions**:
+  - `LlmProvider` (`src/llm/mod.rs`): Script generation providers.
+  - `EmbeddingProvider` (`src/embeddings/mod.rs`): Semantic vector generation.
+  - `TtsProvider` (`src/tts/mod.rs`): Audio synthesis.
+- **Strict Isolation**: The `episode` module is the single orchestrator aware of all layers. Individual LLM, TTS, or news modules do not cross-depend or directly touch memory storage.
+- **Explicit Failures**: Do not silently assume missing required configuration fields. Return descriptive errors.
 
 ---
 
-## Rodando Testes Localmente
+## How to Add a New Provider
 
-Antes de abrir um Pull Request, certifique-se de que todos os testes passem:
+### 1. New LLM Provider
+- If the provider follows OpenAI's specification (`/chat/completions`), use `OpenAiCompatibleProvider` and adjust `base_url` in `pheme.toml`.
+- If custom API payloads or headers are required, create a file at `src/llm/<provider>.rs`, implement `LlmProvider`, and register it in `src/llm/mod.rs` and `src/episode/mod.rs`.
+
+### 2. New TTS Provider
+- Create a file at `src/tts/<provider>.rs`.
+- Implement `TtsProvider`, ensuring the output is a valid **WAV** byte buffer.
+
+---
+
+## Running Tests Locally
+
+Before submitting a Pull Request, ensure formatting, linting, and all tests pass:
 
 ```bash
 cargo fmt --all -- --check
@@ -40,12 +40,12 @@ cargo test
 
 ---
 
-## Fluxo de Pull Request
+## Pull Request Workflow
 
-1. Faça um Fork do repositório.
-2. Crie uma branch para sua funcionalidade: `git checkout -b minha-feature`.
-3. Escreva testes para cobrir suas alterações.
-4. Faça commit das mudanças com mensagens claras.
-5. Envie um Pull Request apontando para a branch `main`.
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b my-feature`.
+3. Add tests covering your changes.
+4. Commit your changes with clear messages.
+5. Submit a Pull Request targeting the `main` branch.
 
-Muito obrigado por ajudar a evoluir o Pheme!
+Thank you for helping improve Pheme!

@@ -59,7 +59,7 @@ async fn main() -> Result<()> {
                 .unwrap_or_else(|| "pt-BR".to_string());
             print_help_guide(&selected_lang);
         }
-        None => {
+        None => loop {
             print_banner();
             let cfg = Config::load().ok();
             let lang = cfg.as_ref().map(|c| c.language.as_str()).unwrap_or("pt-BR");
@@ -91,13 +91,18 @@ async fn main() -> Result<()> {
                 },
                 options,
             )
-            .prompt()?;
+            .prompt();
+
+            let choice = match choice {
+                Ok(c) => c,
+                Err(_) => break,
+            };
 
             if choice.starts_with("1") {
                 let url = Text::new(if is_english {
-                    "Enter news article URL:"
+                    "Enter news article URL (press Enter without typing to go back):"
                 } else {
-                    "Digite a URL da notícia:"
+                    "Digite a URL da notícia (pressione Enter sem digitar para voltar):"
                 })
                 .prompt()?;
 
@@ -112,19 +117,28 @@ async fn main() -> Result<()> {
                     );
                 }
             } else if choice.starts_with("2") {
-                config::wizard::run_wizard()?;
+                let _ = config::wizard::run_wizard();
             } else if choice.starts_with("3") {
-                let active_cfg = Config::load()?;
-                let toml_str = toml::to_string_pretty(&active_cfg)?;
-                println!(
-                    "{}\n{}",
-                    "--- Active Configuration ---".bold().cyan(),
-                    toml_str.bright_black()
-                );
+                if let Ok(active_cfg) = Config::load() {
+                    let toml_str = toml::to_string_pretty(&active_cfg)?;
+                    println!(
+                        "{}\n{}",
+                        "--- Active Configuration ---".bold().cyan(),
+                        toml_str.bright_black()
+                    );
+                } else {
+                    println!(
+                        "{}",
+                        "No active configuration found. Run `pheme init` first.".red()
+                    );
+                }
             } else if choice.starts_with("4") {
                 print_help_guide(lang);
+            } else if choice.starts_with("5") {
+                println!("Exiting Pheme.");
+                break;
             }
-        }
+        },
     }
 
     Ok(())

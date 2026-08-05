@@ -1,0 +1,24 @@
+# Compilação e Binários Rust
+/target
+
+# Arquivos de Configuração Local & Segredos
+pheme.toml
+.env
+*.env
+
+# Saídas e Bancos de Dados Locais
+/episodes
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos de IDEs e Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db

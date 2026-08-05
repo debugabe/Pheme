@@ -1,0 +1,44 @@
+# Configuração do Pheme
+language = "pt-BR"
+
+[llm]
+# Provedor de LLM: "openai_compatible", "ollama_native", ou "anthropic"
+provider = "openai_compatible"
+# URL base da API (para openai_compatible ex: OpenRouter, Groq, DeepSeek, Ollama Cloud, OpenAI)
+base_url = "https://api.openai.com/v1"
+# Nome da variável de ambiente com a chave (nunca escreva a chave no arquivo)
+api_key_env = "OPENAI_API_KEY"
+model = "gpt-4o-mini"
+
+[embedding]
+# Provedor de Embeddings: "openai" ou "ollama"
+provider = "openai"
+base_url = "https://api.openai.com/v1"
+api_key_env = "OPENAI_API_KEY"
+model = "text-embedding-3-small"
+
+[tts]
+# Provedor de TTS: "piper" (local) ou "elevenlabs" (API)
+provider = "piper"
+# Para piper: caminho para o binário executável do Piper
+piper_path = "piper"
+# Para piper: caminhos dos arquivos .onnx de voz
+interviewer_voice = "pt_BR-faber-medium.onnx"
+specialist_voice = "pt_BR-carlos-medium.onnx"
+# Para elevenlabs (se provider = "elevenlabs"):
+elevenlabs_api_key_env = "ELEVENLABS_API_KEY"
+
+[personas.interviewer]
+name = "Alex"
+mood = "didatico" # didatico, cetico, entusiasta, direto
+
+[personas.specialist]
+name = "Dr. Silva"
+domain = "Inteligência Artificial"
+mood = "entusiasta"
+
+[defaults]
+period_days = 7
+duration_preset = "medio" # curto (~3-5min), medio (~7-10min), longo (~15min+)
+output_dir = "./episodes"
+db_path = "~/.config/pheme/memory.db"

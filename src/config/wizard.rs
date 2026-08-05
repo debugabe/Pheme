@@ -22,15 +22,15 @@ pub fn run_wizard() -> Result<()> {
     let is_english = language.starts_with("en");
 
     let mode_lbl = if is_english {
-        "Select setup mode / Selecione o modo de configuração:"
+        "Select setup mode / Selecione o modo de execução:"
     } else {
-        "Selecione o modo de configuração:"
+        "Selecione o modo de execução:"
     };
 
     let mode_options = if is_english {
-        vec!["API KEY (Cloud / Nuvem)", "LOCAL (Offline / Local)"]
+        vec!["API KEY (Cloud / Remote API)", "LOCAL (Offline / Local)"]
     } else {
-        vec!["API KEY (Nuvem)", "LOCAL (Offline / Local)"]
+        vec!["API KEY (Nuvem / Remote API)", "LOCAL (Offline / Local)"]
     };
 
     let chosen_mode = Select::new(mode_lbl, mode_options)
@@ -42,77 +42,207 @@ pub fn run_wizard() -> Result<()> {
     // 1. LLM Setup
     let (llm_provider, llm_base_url, llm_api_key_env, llm_model) = if is_cloud_mode {
         if is_english {
-            println!("\n--- Cloud LLM Configuration (Script Generation) ---");
+            println!("\n--- API Provider LLM Setup (Script Generation) ---");
         } else {
-            println!("\n--- Configuração de LLM em Nuvem (Roteiro) ---");
+            println!("\n--- Configuração de Provedor de API LLM (Roteiro) ---");
         }
 
-        let llm_providers = vec!["openai_compatible", "anthropic"];
-        let llm_provider = Select::new(
+        let provider_choices = vec![
+            "OpenAI (api.openai.com)",
+            "OpenRouter (openrouter.ai)",
+            "Groq (api.groq.com)",
+            "DeepSeek (api.deepseek.com)",
+            "Ollama Remote (Custom URL + API Key)",
+            "Anthropic (api.anthropic.com)",
+            "Custom OpenAI-Compatible Endpoint",
+        ];
+
+        let chosen_p = Select::new(
             if is_english {
-                "LLM Provider:"
+                "Select API Service:"
             } else {
-                "Provedor de LLM:"
+                "Selecione o Serviço de API:"
             },
-            llm_providers,
+            provider_choices,
         )
-        .prompt()?
-        .to_string();
+        .prompt()?;
 
-        let base_url = if llm_provider == "openai_compatible" {
-            Some(
-                Text::new(if is_english {
-                    "LLM API Base URL:"
+        match chosen_p {
+            "OpenAI (api.openai.com)" => {
+                let model = Text::new(if is_english {
+                    "OpenAI Model:"
                 } else {
-                    "URL Base da API LLM:"
+                    "Modelo da OpenAI:"
                 })
-                .with_default("https://api.openai.com/v1")
-                .prompt()?,
-            )
-        } else {
-            Some("https://api.anthropic.com".to_string())
-        };
-
-        let default_env_var = if llm_provider == "anthropic" {
-            "ANTHROPIC_API_KEY"
-        } else {
-            "OPENAI_API_KEY"
-        };
-
-        let api_key_env = Text::new(if is_english {
-            "Environment variable for API key:"
-        } else {
-            "Variável de ambiente para chave de API:"
-        })
-        .with_default(default_env_var)
-        .prompt()?;
-
-        let default_model = if llm_provider == "anthropic" {
-            "claude-3-5-sonnet-20241022"
-        } else {
-            "gpt-4o-mini"
-        };
-
-        let model = Text::new(if is_english {
-            "LLM Model:"
-        } else {
-            "Modelo de LLM:"
-        })
-        .with_default(default_model)
-        .prompt()?;
-
-        (llm_provider, base_url, Some(api_key_env), model)
+                .with_default("gpt-4o-mini")
+                .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("OPENAI_API_KEY")
+                .prompt()?;
+                (
+                    "openai_compatible".to_string(),
+                    Some("https://api.openai.com/v1".to_string()),
+                    Some(env_var),
+                    model,
+                )
+            }
+            "OpenRouter (openrouter.ai)" => {
+                let model = Text::new(if is_english {
+                    "OpenRouter Model:"
+                } else {
+                    "Modelo do OpenRouter:"
+                })
+                .with_default("anthropic/claude-3.5-sonnet")
+                .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("OPENROUTER_API_KEY")
+                .prompt()?;
+                (
+                    "openai_compatible".to_string(),
+                    Some("https://openrouter.ai/api/v1".to_string()),
+                    Some(env_var),
+                    model,
+                )
+            }
+            "Groq (api.groq.com)" => {
+                let model = Text::new(if is_english {
+                    "Groq Model:"
+                } else {
+                    "Modelo no Groq:"
+                })
+                .with_default("llama-3.3-70b-versatile")
+                .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("GROQ_API_KEY")
+                .prompt()?;
+                (
+                    "openai_compatible".to_string(),
+                    Some("https://api.groq.com/openai/v1".to_string()),
+                    Some(env_var),
+                    model,
+                )
+            }
+            "DeepSeek (api.deepseek.com)" => {
+                let model = Text::new(if is_english {
+                    "DeepSeek Model:"
+                } else {
+                    "Modelo no DeepSeek:"
+                })
+                .with_default("deepseek-chat")
+                .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("DEEPSEEK_API_KEY")
+                .prompt()?;
+                (
+                    "openai_compatible".to_string(),
+                    Some("https://api.deepseek.com/v1".to_string()),
+                    Some(env_var),
+                    model,
+                )
+            }
+            "Ollama Remote (Custom URL + API Key)" => {
+                let base_url = Text::new(if is_english {
+                    "Ollama Remote Base URL:"
+                } else {
+                    "URL Base do Ollama Remoto:"
+                })
+                .with_default("https://your-ollama-host:11434")
+                .prompt()?;
+                let model = Text::new(if is_english {
+                    "Ollama Model:"
+                } else {
+                    "Modelo no Ollama:"
+                })
+                .with_default("llama3")
+                .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "Ollama API Key Env Var:"
+                } else {
+                    "Variável da Chave de API Ollama:"
+                })
+                .with_default("OLLAMA_API_KEY")
+                .prompt()?;
+                (
+                    "ollama_native".to_string(),
+                    Some(base_url),
+                    Some(env_var),
+                    model,
+                )
+            }
+            "Anthropic (api.anthropic.com)" => {
+                let model = Text::new(if is_english {
+                    "Anthropic Model:"
+                } else {
+                    "Modelo da Anthropic:"
+                })
+                .with_default("claude-3-5-sonnet-20241022")
+                .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("ANTHROPIC_API_KEY")
+                .prompt()?;
+                (
+                    "anthropic".to_string(),
+                    Some("https://api.anthropic.com".to_string()),
+                    Some(env_var),
+                    model,
+                )
+            }
+            _ => {
+                let base_url = Text::new(if is_english { "Base URL:" } else { "URL Base:" })
+                    .with_default("https://api.openai.com/v1")
+                    .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("OPENAI_API_KEY")
+                .prompt()?;
+                let model = Text::new(if is_english {
+                    "Model Name:"
+                } else {
+                    "Nome do Modelo:"
+                })
+                .prompt()?;
+                (
+                    "openai_compatible".to_string(),
+                    Some(base_url),
+                    Some(env_var),
+                    model,
+                )
+            }
+        }
     } else {
         if is_english {
-            println!("\n--- Local LLM Configuration (Ollama) ---");
+            println!("\n--- Local LLM Configuration (Ollama Local) ---");
         } else {
-            println!("\n--- Configuração de LLM Local (Ollama) ---");
+            println!("\n--- Configuração de LLM Local (Ollama Local) ---");
         }
 
         let base_url = Text::new(if is_english {
-            "Ollama Base URL:"
+            "Ollama Local Base URL:"
         } else {
-            "URL Base do Ollama:"
+            "URL Base do Ollama Local:"
         })
         .with_default("http://localhost:11434")
         .prompt()?;
@@ -131,46 +261,91 @@ pub fn run_wizard() -> Result<()> {
     // 2. Embedding Setup
     let (emb_provider, emb_base_url, emb_api_key_env, emb_model) = if is_cloud_mode {
         if is_english {
-            println!("\n--- Cloud Embedding Configuration ---");
+            println!("\n--- Embedding Setup ---");
         } else {
-            println!("\n--- Configuração de Embedding em Nuvem ---");
+            println!("\n--- Configuração de Embedding ---");
         }
 
-        let base_url = Text::new(if is_english {
-            "Embedding API Base URL:"
-        } else {
-            "URL Base do Embedding:"
-        })
-        .with_default("https://api.openai.com/v1")
-        .prompt()?;
+        let emb_choices = vec![
+            "OpenAI Embedding (text-embedding-3-small)",
+            "Ollama Remote Embedding (nomic-embed-text)",
+            "Custom OpenAI-Compatible Embedding",
+        ];
 
-        let api_key_env = Text::new(if is_english {
-            "Environment variable for Embedding key:"
-        } else {
-            "Variável de ambiente para chave de Embedding:"
-        })
-        .with_default("OPENAI_API_KEY")
-        .prompt()?;
-
-        let model = Text::new(if is_english {
-            "Embedding Model:"
-        } else {
-            "Modelo de Embedding:"
-        })
-        .with_default("text-embedding-3-small")
-        .prompt()?;
-
-        (
-            "openai".to_string(),
-            Some(base_url),
-            Some(api_key_env),
-            model,
+        let chosen_e = Select::new(
+            if is_english {
+                "Select Embedding Provider:"
+            } else {
+                "Selecione o Provedor de Embedding:"
+            },
+            emb_choices,
         )
+        .prompt()?;
+
+        match chosen_e {
+            "OpenAI Embedding (text-embedding-3-small)" => {
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("OPENAI_API_KEY")
+                .prompt()?;
+                (
+                    "openai".to_string(),
+                    Some("https://api.openai.com/v1".to_string()),
+                    Some(env_var),
+                    "text-embedding-3-small".to_string(),
+                )
+            }
+            "Ollama Remote Embedding (nomic-embed-text)" => {
+                let base_url = Text::new(if is_english {
+                    "Ollama Remote Base URL:"
+                } else {
+                    "URL Base do Ollama Remoto:"
+                })
+                .with_default("https://your-ollama-host:11434")
+                .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("OLLAMA_API_KEY")
+                .prompt()?;
+                (
+                    "ollama".to_string(),
+                    Some(base_url),
+                    Some(env_var),
+                    "nomic-embed-text".to_string(),
+                )
+            }
+            _ => {
+                let base_url = Text::new(if is_english { "Base URL:" } else { "URL Base:" })
+                    .with_default("https://api.openai.com/v1")
+                    .prompt()?;
+                let env_var = Text::new(if is_english {
+                    "API Key Env Var:"
+                } else {
+                    "Variável da Chave de API:"
+                })
+                .with_default("OPENAI_API_KEY")
+                .prompt()?;
+                let model = Text::new(if is_english {
+                    "Embedding Model Name:"
+                } else {
+                    "Nome do Modelo de Embedding:"
+                })
+                .with_default("text-embedding-3-small")
+                .prompt()?;
+                ("openai".to_string(), Some(base_url), Some(env_var), model)
+            }
+        }
     } else {
         if is_english {
-            println!("\n--- Local Embedding Configuration (Ollama) ---");
+            println!("\n--- Local Embedding Configuration (Ollama Local) ---");
         } else {
-            println!("\n--- Configuração de Embedding Local (Ollama) ---");
+            println!("\n--- Configuração de Embedding Local (Ollama Local) ---");
         }
 
         let base_url = Text::new(if is_english {

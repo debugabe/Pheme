@@ -6,7 +6,6 @@ use colored::*;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-
 use crate::audio::{concatenate_wav_buffers, AudioTechnicalReviewer};
 use crate::config::Config;
 use crate::embeddings::{

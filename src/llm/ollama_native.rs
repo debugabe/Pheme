@@ -7,13 +7,15 @@ use super::{LlmProvider, LlmScriptResponse};
 
 pub struct OllamaNativeProvider {
     pub base_url: String,
+    pub api_key: Option<String>,
     pub model: String,
 }
 
 impl OllamaNativeProvider {
-    pub fn new(base_url: Option<String>, model: String) -> Self {
+    pub fn new(base_url: Option<String>, api_key: Option<String>, model: String) -> Self {
         Self {
             base_url: base_url.unwrap_or_else(|| "http://localhost:11434".into()),
+            api_key,
             model,
         }
     }
@@ -28,20 +30,23 @@ impl LlmProvider for OllamaNativeProvider {
     ) -> Result<LlmScriptResponse> {
         let client = Client::new();
         let endpoint = format!("{}/api/generate", self.base_url.trim_end_matches('/'));
-
         let prompt = format!("SYSTEM:\n{}\n\nUSER:\n{}", system_prompt, user_prompt);
 
-        let resp = client
-            .post(&endpoint)
-            .json(&json!({
-                "model": self.model,
-                "prompt": prompt,
-                "format": "json",
-                "stream": false
-            }))
+        let mut req = client.post(&endpoint).json(&json!({
+            "model": self.model,
+            "prompt": prompt,
+            "format": "json",
+            "stream": false
+        }));
+
+        if let Some(key) = &self.api_key {
+            req = req.bearer_auth(key);
+        }
+
+        let resp = req
             .send()
             .await
-            .with_context(|| format!("Falha ao conectar no Ollama local em {}", endpoint))?;
+            .with_context(|| format!("Falha ao conectar no Ollama em {}", endpoint))?;
 
         if !resp.status().is_success() {
             let err_text = resp.text().await.unwrap_or_default();

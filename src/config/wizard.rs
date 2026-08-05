@@ -58,24 +58,30 @@ pub fn run_wizard() -> Result<()> {
         None
     };
 
-    let api_key_lbl = if is_english {
-        "Environment variable name for API key:"
-    } else {
-        "Nome da variável de ambiente com a chave de API:"
+    let api_key_default = match llm_provider.as_str() {
+        "anthropic" => "ANTHROPIC_API_KEY",
+        "ollama_native" => "OLLAMA_API_KEY",
+        _ => "OPENAI_API_KEY",
     };
 
-    let llm_api_key_env = if llm_provider != "ollama_native" {
-        Some(
-            Text::new(api_key_lbl)
-                .with_default(if llm_provider == "anthropic" {
-                    "ANTHROPIC_API_KEY"
-                } else {
-                    "OPENAI_API_KEY"
-                })
-                .prompt()?,
-        )
+    let api_key_lbl = if is_english {
+        "Environment variable name for API key (press Enter to skip for local Ollama):"
     } else {
+        "Nome da variável de ambiente com a chave de API (pressione Enter para ignorar no Ollama local):"
+    };
+
+    let api_key_input = Text::new(api_key_lbl)
+        .with_default(if llm_provider == "ollama_native" {
+            ""
+        } else {
+            api_key_default
+        })
+        .prompt()?;
+
+    let llm_api_key_env = if api_key_input.trim().is_empty() {
         None
+    } else {
+        Some(api_key_input.trim().to_string())
     };
 
     let default_model = match llm_provider.as_str() {
@@ -127,19 +133,23 @@ pub fn run_wizard() -> Result<()> {
     };
 
     let emb_key_lbl = if is_english {
-        "Environment variable for Embedding API key:"
+        "Environment variable for Embedding API key (press Enter to skip for local Ollama):"
     } else {
-        "Variável de ambiente para chave de Embedding:"
+        "Variável de ambiente para chave de Embedding (pressione Enter para ignorar no Ollama local):"
     };
 
-    let emb_api_key_env = if emb_provider == "openai" {
-        Some(
-            Text::new(emb_key_lbl)
-                .with_default("OPENAI_API_KEY")
-                .prompt()?,
-        )
-    } else {
+    let emb_key_input = Text::new(emb_key_lbl)
+        .with_default(if emb_provider == "ollama" {
+            ""
+        } else {
+            "OPENAI_API_KEY"
+        })
+        .prompt()?;
+
+    let emb_api_key_env = if emb_key_input.trim().is_empty() {
         None
+    } else {
+        Some(emb_key_input.trim().to_string())
     };
 
     let emb_model_lbl = if is_english {

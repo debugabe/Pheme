@@ -48,6 +48,7 @@ impl EpisodeGenerator {
             }
             "ollama_native" => Arc::new(OllamaNativeProvider::new(
                 config.llm.base_url.clone(),
+                config.llm.resolve_api_key(),
                 config.llm.model.clone(),
             )),
             "anthropic" => {
@@ -75,6 +76,7 @@ impl EpisodeGenerator {
             }
             "ollama" => Arc::new(OllamaEmbeddingProvider::new(
                 config.embedding.base_url.clone(),
+                config.embedding.resolve_api_key(),
                 config.embedding.model.clone(),
             )),
             provider => return Err(anyhow!("Provedor de Embedding desconhecido: {}", provider)),

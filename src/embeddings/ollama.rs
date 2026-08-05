@@ -7,13 +7,15 @@ use super::EmbeddingProvider;
 
 pub struct OllamaEmbeddingProvider {
     pub base_url: String,
+    pub api_key: Option<String>,
     pub model: String,
 }
 
 impl OllamaEmbeddingProvider {
-    pub fn new(base_url: Option<String>, model: String) -> Self {
+    pub fn new(base_url: Option<String>, api_key: Option<String>, model: String) -> Self {
         Self {
             base_url: base_url.unwrap_or_else(|| "http://localhost:11434".into()),
+            api_key,
             model,
         }
     }
@@ -25,12 +27,16 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
         let client = Client::new();
         let endpoint = format!("{}/api/embeddings", self.base_url.trim_end_matches('/'));
 
-        let resp = client
-            .post(&endpoint)
-            .json(&json!({
-                "model": self.model,
-                "prompt": text
-            }))
+        let mut req = client.post(&endpoint).json(&json!({
+            "model": self.model,
+            "prompt": text
+        }));
+
+        if let Some(key) = &self.api_key {
+            req = req.bearer_auth(key);
+        }
+
+        let resp = req
             .send()
             .await
             .with_context(|| format!("Falha ao conectar no Ollama embeddings em {}", endpoint))?;

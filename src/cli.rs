@@ -1,9 +1,10 @@
 use clap::{Parser, Subcommand};
+use colored::*;
 
 #[derive(Parser, Debug)]
 #[command(name = "pheme")]
 #[command(author = "Pheme Contributors")]
-#[command(version = "0.1.0")]
+#[command(version = "0.1.3")]
 #[command(about = "AI Audio Podcast Generator from News with Semantic Memory", long_about = None)]
 #[command(disable_help_subcommand = true)]
 pub struct Cli {
@@ -44,32 +45,120 @@ pub enum Commands {
     },
 }
 
+pub fn print_banner() {
+    let banner = r#"
+  ____  _   _ _____ __  __ _____ 
+ |  _ \| | | | ____|  \/  | ____|
+ | |_) | |_| |  _| | |\/| |  _|  
+ |  __/|  _  | |___| |  | | |___ 
+ |_|   |_| |_|_____|_|  |_|_____|
+"#;
+    println!("{}", banner.cyan().bold());
+    println!(
+        "  {}\n",
+        "AI Audio Podcast Generator from News & Semantic Memory"
+            .bright_black()
+            .italic()
+    );
+}
+
 pub fn print_help_guide(lang: &str) {
+    print_banner();
+
     if lang.starts_with("en") {
         println!(
-            "Pheme CLI — Available Commands Guide\n\n\
-            1. pheme init\n\
-               Launches an interactive wizard to configure LLM, TTS, Embeddings, Personas and language.\n\n\
-            2. pheme generate <URL> [--duration short|medium|long]\n\
-               Generates a complete podcast episode from a news article URL.\n\
-               Aliases: `pheme gen <URL>`, `pheme g <URL>`\n\n\
-            3. pheme config [--show]\n\
-               Validates active configuration file or displays full TOML settings.\n\n\
-            4. pheme help [--lang en|pt] (or `pheme /help`)\n\
-               Displays this comprehensive command guide."
+            "{}",
+            "Pheme CLI — Available Commands Guide".bold().underline()
+        );
+        println!();
+        println!("  1. {}", "pheme init".cyan().bold());
+        println!(
+            "     {}",
+            "Launches an interactive wizard to configure LLM, TTS, Embeddings, Personas and language.".bright_black()
+        );
+        println!();
+        println!(
+            "  2. {} {} [{}]",
+            "pheme generate".cyan().bold(),
+            "<URL>".yellow(),
+            "--duration short|medium|long".bright_black()
+        );
+        println!(
+            "     {}",
+            "Generates a complete podcast episode from a news article URL.".bright_black()
+        );
+        println!(
+            "     {}",
+            "Aliases: pheme gen <URL>, pheme g <URL>".dimmed()
+        );
+        println!();
+        println!(
+            "  3. {} [{}]",
+            "pheme config".cyan().bold(),
+            "--show".yellow()
+        );
+        println!(
+            "     {}",
+            "Validates active configuration file or displays full TOML settings.".bright_black()
+        );
+        println!();
+        println!(
+            "  4. {} [{}] (or {})",
+            "pheme help".cyan().bold(),
+            "--lang en|pt".yellow(),
+            "pheme /help".cyan()
+        );
+        println!(
+            "     {}\n",
+            "Displays this comprehensive command guide.".bright_black()
         );
     } else {
         println!(
-            "Pheme CLI — Guia Completo de Comandos\n\n\
-            1. pheme init\n\
-               Inicia o assistente interativo para configurar LLM, TTS, Embeddings, Personas e idioma.\n\n\
-            2. pheme generate <URL> [--duration curto|medio|longo]\n\
-               Gera um episódio completo de podcast a partir da URL de uma notícia.\n\
-               Atalhos: `pheme gen <URL>`, `pheme g <URL>`, `pheme gerar <URL>`\n\n\
-            3. pheme config [--show]\n\
-               Valida o arquivo de configuração ativo ou exibe todas as definições TOML.\n\n\
-            4. pheme help [--lang en|pt] (ou `pheme /help`)\n\
-               Exibe este guia detalhado de comandos."
+            "{}",
+            "Pheme CLI — Guia Completo de Comandos".bold().underline()
+        );
+        println!();
+        println!("  1. {}", "pheme init".cyan().bold());
+        println!(
+            "     {}",
+            "Inicia o assistente interativo para configurar LLM, TTS, Embeddings, Personas e idioma.".bright_black()
+        );
+        println!();
+        println!(
+            "  2. {} {} [{}]",
+            "pheme generate".cyan().bold(),
+            "<URL>".yellow(),
+            "--duration curto|medio|longo".bright_black()
+        );
+        println!(
+            "     {}",
+            "Gera um episódio completo de podcast a partir da URL de uma notícia.".bright_black()
+        );
+        println!(
+            "     {}",
+            "Atalhos: pheme gen <URL>, pheme g <URL>, pheme gerar <URL>".dimmed()
+        );
+        println!();
+        println!(
+            "  3. {} [{}]",
+            "pheme config".cyan().bold(),
+            "--show".yellow()
+        );
+        println!(
+            "     {}",
+            "Valida o arquivo de configuração ativo ou exibe todas as definições TOML."
+                .bright_black()
+        );
+        println!();
+        println!(
+            "  4. {} [{}] (ou {})",
+            "pheme help".cyan().bold(),
+            "--lang en|pt".yellow(),
+            "pheme /help".cyan()
+        );
+        println!(
+            "     {}\n",
+            "Exibe este guia detalhado de comandos.".bright_black()
         );
     }
 }

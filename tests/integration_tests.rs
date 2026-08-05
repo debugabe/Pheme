@@ -51,7 +51,6 @@ fn test_persona_axes_generation() {
     let persona = Persona {
         name: "Alex".into(),
         role: Role::Interviewer,
-        domain: Some("IA".into()),
         mood: "cetico".into(),
     };
 

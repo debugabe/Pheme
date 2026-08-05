@@ -135,14 +135,12 @@ impl EpisodeGenerator {
         let interviewer_persona = Persona {
             name: self.config.personas.interviewer.name.clone(),
             role: Role::Interviewer,
-            domain: self.config.personas.interviewer.domain.clone(),
             mood: self.config.personas.interviewer.mood.clone(),
         };
 
         let specialist_persona = Persona {
             name: self.config.personas.specialist.name.clone(),
             role: Role::Specialist,
-            domain: self.config.personas.specialist.domain.clone(),
             mood: self.config.personas.specialist.mood.clone(),
         };
 
@@ -247,7 +245,11 @@ impl EpisodeGenerator {
             &self.config.defaults.duration_preset,
             &interviewer_persona.name,
             &specialist_persona.name,
-            specialist_persona.domain.as_deref().unwrap_or("Tecnologia"),
+            script_resp
+                .topics
+                .first()
+                .map(|s| s.as_str())
+                .unwrap_or("Tema da Notícia"),
             &script_resp,
             &final_audio_wav,
         )?;

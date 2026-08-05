@@ -13,7 +13,6 @@ pub enum Role {
 pub struct Persona {
     pub name: String,
     pub role: Role,
-    pub domain: Option<String>,
     pub mood: String,
 }
 
@@ -24,21 +23,19 @@ impl Persona {
 
     pub fn build_prompt_instructions(&self) -> String {
         let axes = self.get_axes();
-        let domain_str = self.domain.as_deref().unwrap_or("Tecnologia Geral");
 
         match self.role {
             Role::Interviewer => format!(
-                "Você é {}, entrevistador(a) fixo(a) do podcast. Seu domínio de foco é {}.\n\
+                "Você é {}, o(a) apresentador(a) e entrevistador(a) do podcast. Seu papel é guiar a conversa, fazer perguntas instigantes e aprofundar a discussão com base na notícia do dia.\n\
                 Tom de voz e postura: {}\n\
                 Diretrizes comportamentais:\n\
                 - Concisão vs Expansividade: {}\n\
-                - Didática vs Diretivera: {}\n\
+                - Didática vs Diretividade: {}\n\
                 - Ceticismo vs Entusiasmo: {}\n\
                 - Formalidade vs Descontração: {}\n\
                 - Estilo: {}\n\
                 - Abordagem: {}",
                 self.name,
-                domain_str,
                 axes.summary_description(),
                 axes.concise_vs_expansive,
                 axes.didactic_vs_direct,
@@ -48,17 +45,16 @@ impl Persona {
                 axes.provocative_vs_conciliatory
             ),
             Role::Specialist => format!(
-                "Você é {}, especialista convidado(a) no tema '{}'.\n\
+                "Você é {}, o(a) especialista convidado(a) no tema da notícia em pauta. Seu papel é trazer explicações profundas, análises técnicas e visão prática sobre o assunto discutido.\n\
                 Tom de voz e postura: {}\n\
                 Diretrizes comportamentais:\n\
                 - Concisão vs Expansividade: {}\n\
-                - Didática vs Diretivera: {}\n\
+                - Didática vs Diretividade: {}\n\
                 - Ceticismo vs Entusiasmo: {}\n\
                 - Formalidade vs Descontração: {}\n\
                 - Estilo: {}\n\
                 - Abordagem: {}",
                 self.name,
-                domain_str,
                 axes.summary_description(),
                 axes.concise_vs_expansive,
                 axes.didactic_vs_direct,

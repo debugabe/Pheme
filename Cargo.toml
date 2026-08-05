@@ -1,6 +1,6 @@
 [package]
 name = "pheme"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 authors = ["Pheme Contributors <contributors@pheme.dev>"]
 description = "CLI tool to generate audio podcast episodes from news using AI personas and semantic memory."
@@ -35,3 +35,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 tempfile = "3.8"
+png = "0.17"

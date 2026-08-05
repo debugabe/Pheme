@@ -52,12 +52,12 @@ fn crimson<T: AsRef<str>>(s: T) -> ColoredString {
 
 pub fn print_banner() {
     let title_art = r#"
-.______   .__   __.  _______ .___  ___.  _______ 
-|   _  \  |  \ |  | |   ____||   \/   | |   ____|
-|  |_)  | |   \|  | |  |__   |  \  /  | |  |__   
-|   ___/  |  . `  | |   __|  |  |\/|  | |   __|  
-|  |      |  |\   | |  |____ |  |  |  | |  |____ 
-| _|      |__| \__| |_______||__|  |__| |_______|
+.______   __    __   _______ .___  ___.  _______ 
+|   _  \ |  |  |  | |   ____||   \/   | |   ____|
+|  |_)  ||  |__|  | |  |__   |  \  /  | |  |__   
+|   ___/ |   __   | |   __|  |  |\/|  | |   __|  
+|  |     |  |  |  | |  |____ |  |  |  | |  |____ 
+| _|     |__|  |__| |_______||__|  |__| |_______|
 "#;
 
     println!("{}", crimson(title_art).bold());
@@ -68,29 +68,25 @@ pub fn print_help_guide(lang: &str) {
 
     let is_english = lang.starts_with("en");
 
+    // Arte ASCII derivada da imagem pheme.png
     let emblem = vec![
-        r#"       /\  /\       "#,
-        r#"      /  \/  \      "#,
-        r#"     |   ||   |     "#,
-        r#"     |  (o)   |     "#,
-        r#"      \  ||  /      "#,
-        r#"       \ || /       "#,
-        r#"        \||/        "#,
-        r#"         \/         "#,
-        r#"      .------.      "#,
-        r#"     /  PHEME \     "#,
-        r#"    (  AUDIO AI )   "#,
-        r#"     \________/     "#,
+        r#"########################"#,
+        r#"################## @####"#,
+        r#"###########@@@###  ##  @"#,
+        r#"### ####* % # ####.@  ##"#,
+        r#"###       #  @  ## #@###"#,
+        r#"### #  ## #@@%# @@ #####"#,
+        r#"### # ##@@@@@##%@@#@####"#,
+        r#"### -  #@# ###@@@   ####"#,
+        r#"####@#  =@@@#@@# #@ ####"#,
+        r#"###@#@@@ #=  #    ######"#,
+        r#"      .------.          "#,
+        r#"     (  AUDIO AI )      "#,
     ];
 
-    let version_header = if is_english {
-        " Pheme v0.1.5 (2026) "
-    } else {
-        " Pheme v0.1.5 (2026) "
-    };
+    let version_header = " Pheme v0.1.5 (2026) ";
 
-    // Box top line
-    let box_width = 86;
+    let box_width = 90;
     let header_fill = box_width - 3 - version_header.len();
     let top_border = format!("┌{} {}┐", "─".repeat(header_fill), version_header);
 
@@ -229,13 +225,13 @@ pub fn print_help_guide(lang: &str) {
     }
 
     let max_rows = emblem.len().max(right_lines.len());
-
     let empty_line = "".into();
+
     for i in 0..max_rows {
         let left_part = if i < emblem.len() {
             emblem[i]
         } else {
-            "                    "
+            "                        "
         };
 
         let right_part = if i < right_lines.len() {
@@ -245,7 +241,7 @@ pub fn print_help_guide(lang: &str) {
         };
 
         println!(
-            "{} {:<22} │ {:<58} {}",
+            "{} {:<24} │ {:<58} {}",
             crimson("│"),
             crimson(left_part).bold(),
             right_part,
@@ -253,7 +249,6 @@ pub fn print_help_guide(lang: &str) {
         );
     }
 
-    // Box bottom line
     let bottom_border = format!("└{}┘", "─".repeat(box_width - 2));
     println!("{}\n", crimson(&bottom_border).bold());
 }
